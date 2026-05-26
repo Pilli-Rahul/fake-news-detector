@@ -1,269 +1,24 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fake News Detector</title>
-  <style>
-    /* ── RESET & BASE ─────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      background: #0f0f13;
-      color: #e2e8f0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* ── HEADER ───────────────────────────────── */
-    header {
-      background: #16161e;
-      border-bottom: 1px solid #2d2d3a;
-      padding: 1.25rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    header .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    header .brand span { color: #6366f1; }
-
-    .accuracy-badge {
-      background: #1e1e2e;
-      border: 1px solid #3f3f5a;
-      border-radius: 999px;
-      padding: 0.3rem 0.9rem;
-      font-size: 0.78rem;
-      color: #a5b4fc;
-    }
-
-    /* ── MAIN ─────────────────────────────────── */
-    main {
-      flex: 1;
-      max-width: 780px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 3rem 1.5rem;
-    }
-
-    .hero {
-      text-align: center;
-      margin-bottom: 2.5rem;
-    }
-
-    .hero h1 {
-      font-size: 2rem;
-      font-weight: 800;
-      line-height: 1.2;
-      margin-bottom: 0.6rem;
-    }
-
-    .hero h1 em {
-      font-style: normal;
-      background: linear-gradient(135deg, #6366f1, #a78bfa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero p {
-      color: #94a3b8;
-      font-size: 0.95rem;
-    }
-
-    /* ── CARD ─────────────────────────────────── */
-    .card {
-      background: #16161e;
-      border: 1px solid #2d2d3a;
-      border-radius: 16px;
-      padding: 2rem;
-    }
-
-    label {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #94a3b8;
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    textarea {
-      width: 100%;
-      height: 200px;
-      background: #0f0f13;
-      border: 1px solid #2d2d3a;
-      border-radius: 10px;
-      color: #e2e8f0;
-      font-size: 0.95rem;
-      line-height: 1.6;
-      padding: 1rem;
-      resize: vertical;
-      transition: border-color 0.2s;
-      font-family: inherit;
-    }
-
-    textarea:focus {
-      outline: none;
-      border-color: #6366f1;
-    }
-
-    textarea::placeholder { color: #4a4a6a; }
-
-    .char-count {
-      text-align: right;
-      font-size: 0.78rem;
-      color: #4a4a6a;
-      margin-top: 0.4rem;
-    }
-
-    /* ── BUTTON ───────────────────────────────── */
-    .btn-row {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1.25rem;
-    }
-
-    button {
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.95rem;
-      font-weight: 600;
-      border: none;
-      border-radius: 10px;
-      padding: 0.75rem 1.5rem;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      flex: 1;
-      background: linear-gradient(135deg, #6366f1, #7c3aed);
-      color: #fff;
-    }
-
-    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    .btn-clear {
-      background: #1e1e2e;
-      color: #94a3b8;
-      border: 1px solid #2d2d3a;
-    }
-
-    .btn-clear:hover { background: #2d2d3a; }
-
-    /* ── RESULT ───────────────────────────────── */
-    .result-box {
-      margin-top: 1.5rem;
-      border-radius: 12px;
-      padding: 1.5rem;
-      display: none;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-    .result-box.fake  { background: #1a0a0a; border: 1px solid #7f1d1d; }
-    .result-box.real  { background: #071a0e; border: 1px solid #14532d; }
-    .result-box.error { background: #1a1207; border: 1px solid #713f12; }
-
-    .result-label {
-      font-size: 1.6rem;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .result-box.fake .result-label  { color: #f87171; }
-    .result-box.real .result-label  { color: #4ade80; }
-    .result-box.error .result-label { color: #fbbf24; }
-
-    .result-confidence {
-      font-size: 0.9rem;
-      color: #94a3b8;
-      margin-bottom: 1rem;
-    }
-
-    /* ── PROBABILITY BAR ──────────────────────── */
-    .prob-row { display: flex; flex-direction: column; gap: 0.5rem; }
-
-    .prob-item { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; }
-
-    .prob-label { width: 40px; color: #94a3b8; }
-
-    .bar-track {
-      flex: 1;
-      background: #2d2d3a;
-      border-radius: 999px;
-      height: 8px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width 0.6s ease;
-    }
-
-    .bar-fill.fake { background: #ef4444; }
-    .bar-fill.real { background: #22c55e; }
-
-    .prob-pct { width: 42px; text-align: right; color: #e2e8f0; font-weight: 600; }
-
-    /* ── LOADING ──────────────────────────────── */
-    .spinner {
-      display: inline-block;
-      width: 18px; height: 18px;
-      border: 2px solid #ffffff44;
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      vertical-align: middle;
-      margin-right: 0.4rem;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── FOOTER ───────────────────────────────── */
-    footer {
-      text-align: center;
-      padding: 1.5rem;
-      font-size: 0.8rem;
-      color: #4a4a6a;
-      border-top: 1px solid #2d2d3a;
-    }
-
-    footer a { color: #6366f1; text-decoration: none; }
-  </style>
+  <style>{% include "style.css" %}</style>
 </head>
 <body>
+  <section class="app-shell">
+    <header class="top-row">
+      <div class="brand">Fake OR Real</div>
+      <div class="accuracy-badge">Model accuracy: {{ accuracy }}</div>
+    </header>
 
-  <header>
-    <div class="brand">
-      🔍 <span>Fake</span>Guard
-    </div>
-    <div class="accuracy-badge">Model accuracy: {{ accuracy }}</div>
-  </header>
+    <main>
+      <div class="hero">
+        <h1>Detect <em>Fake News</em> with AI</h1>
+        <p>Paste any news article or headline below. The model will classify it as Real or Fake.</p>
+      </div>
 
-  <main>
-    <div class="hero">
-      <h1>Detect <em>Fake News</em><br/>with AI</h1>
-      <p>Paste any news article or headline below. The model will classify it as Real or Fake.</p>
-    </div>
-
-    <div class="card">
       <label for="newsInput">Paste news article or headline</label>
       <textarea
         id="newsInput"
@@ -272,36 +27,30 @@
       <div class="char-count"><span id="charCount">0</span> characters</div>
 
       <div class="btn-row">
-        <button class="btn-primary" id="predictBtn" onclick="predict()">
-          Analyze Article
-        </button>
+        <button class="btn-primary" id="predictBtn" onclick="predict()">Analyze Article</button>
         <button class="btn-clear" onclick="clearAll()">Clear</button>
       </div>
 
-      <!-- RESULT BOX -->
       <div class="result-box" id="resultBox">
         <div class="result-label" id="resultLabel"></div>
         <div class="result-confidence" id="resultConfidence"></div>
         <div class="prob-row">
           <div class="prob-item">
             <span class="prob-label">Fake</span>
-            <div class="bar-track"><div class="bar-fill fake" id="fakeBar" style="width:0%"></div></div>
+            <div class="bar-track"><div class="bar-fill fake" id="fakeBar"></div></div>
             <span class="prob-pct" id="fakeProb">0%</span>
           </div>
           <div class="prob-item">
             <span class="prob-label">Real</span>
-            <div class="bar-track"><div class="bar-fill real" id="realBar" style="width:0%"></div></div>
+            <div class="bar-track"><div class="bar-fill real" id="realBar"></div></div>
             <span class="prob-pct" id="realProb">0%</span>
           </div>
         </div>
       </div>
-    </div>
-  </main>
+    </main>
 
-  <footer>
-    Built with Python · Flask · Scikit-learn · TF-IDF &nbsp;|&nbsp;
-    <a href="https://github.com/Pilli-Rahul" target="_blank">GitHub</a>
-  </footer>
+    <footer class="footnote">Built with Python, Flask, and Scikit-learn</footer>
+  </section>
 
   <script>
     const textarea   = document.getElementById("newsInput");
@@ -317,7 +66,6 @@
       const text = textarea.value.trim();
       if (!text) { alert("Please paste a news article first."); return; }
 
-      // Loading state
       predictBtn.disabled = true;
       predictBtn.innerHTML = '<span class="spinner"></span> Analyzing...';
       resultBox.style.display = "none";
@@ -337,7 +85,6 @@
         }
 
         showResult(data);
-
       } catch (err) {
         showError("Could not connect to the server. Make sure Flask is running.");
       } finally {
@@ -352,8 +99,8 @@
       resultBox.className  = "result-box " + (isFake ? "fake" : "real");
       resultBox.style.display = "block";
 
-      document.getElementById("resultLabel").innerHTML =
-        isFake ? "🚨 Fake News" : "✅ Real News";
+      document.getElementById("resultLabel").textContent =
+        isFake ? "Fake News" : "Real News";
 
       document.getElementById("resultConfidence").textContent =
         `Confidence: ${data.confidence}%`;
@@ -367,12 +114,12 @@
     function showError(msg) {
       resultBox.className = "result-box error";
       resultBox.style.display = "block";
-      document.getElementById("resultLabel").innerHTML = "⚠️ Error";
+      document.getElementById("resultLabel").textContent = "Error";
       document.getElementById("resultConfidence").textContent = msg;
       document.getElementById("fakeBar").style.width = "0%";
       document.getElementById("realBar").style.width = "0%";
-      document.getElementById("fakeProb").textContent = "—";
-      document.getElementById("realProb").textContent = "—";
+      document.getElementById("fakeProb").textContent = "-";
+      document.getElementById("realProb").textContent = "-";
     }
 
     function clearAll() {
